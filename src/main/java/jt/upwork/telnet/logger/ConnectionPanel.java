@@ -12,12 +12,14 @@ public class ConnectionPanel extends JPanel {
 
     private JTextField ipField;
     private JLabel ipLabel;
+    private JButton logButton;
     private JButton removeButton;
     private JTextField nameField;
     private JLabel nameLabel;
     private JLabel portLabel;
     private JSpinner portSpinner;
     private JLabel statusLabel;
+    private LogPanel logPanel;
     private volatile int index;
 
     private volatile TelnetReaderWorker telnetReaderWorker;
@@ -60,16 +62,29 @@ public class ConnectionPanel extends JPanel {
         ipField.addCaretListener(e -> save());
         portSpinner.addChangeListener(e -> save());
         nameField.addCaretListener(e -> save());
+        logButton.addActionListener(e -> openLog());
 
     }
 
+    private void openLog() {
+        JDialog frame = new JDialog(Application.INSTANCE.getFrame(), "Incoming data", true);
+        frame.getContentPane().add(logPanel);
+        frame.pack();
+        frame.setLocationRelativeTo(this);
+        frame.setVisible(true);
+    }
+
     private void initComponents() {
+
+        logPanel = new LogPanel();
+
         nameLabel = new javax.swing.JLabel();
         nameField = new javax.swing.JTextField();
         ipLabel = new javax.swing.JLabel();
         ipField = new javax.swing.JTextField();
         portLabel = new javax.swing.JLabel();
         portSpinner = new javax.swing.JSpinner();
+        logButton = new javax.swing.JButton();
         removeButton = new javax.swing.JButton();
         statusLabel = new javax.swing.JLabel();
 
@@ -87,20 +102,8 @@ public class ConnectionPanel extends JPanel {
         removeButton.setIcon(Images.INSTANCE.getDeleted());
         removeButton.setBorder(new EmptyBorder(0, 0, 0, 0));
 
-//        this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-////        this.setLayout(new FlowLayout());
-//        this.setBorder(new EmptyBorder(5, 5, 5, 5));
-//        this.add(nameLabel);
-//        nameField.setMinimumSize(new Dimension(200, nameField.getMaximumSize().height));
-//        nameField.setPreferredSize(new Dimension(200, nameField.getPreferredSize().height));
-//        nameField.setMaximumSize(new Dimension(200, nameField.getMaximumSize().height));
-//        this.add(nameField);
-//        this.add(ipLabel);
-//        this.add(ipField);
-//        this.add(portLabel);
-//        this.add(portSpinner);
-//        this.add(statusLabel);
-//        this.add(removeButton);
+        logButton.setIcon(Images.INSTANCE.getLog());
+        logButton.setBorder(new EmptyBorder(0, 0, 0, 0));
 
         this.setBorder(new EmptyBorder(3, 3, 3, 3));
 
@@ -109,46 +112,41 @@ public class ConnectionPanel extends JPanel {
         layout.setHorizontalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
-//                                .addContainerGap()
-                                        .addComponent(ipLabel)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(ipField, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(portLabel)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(portSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(nameLabel)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(nameField, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(statusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(removeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-//                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(ipLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(ipField, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(portLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(portSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(nameLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(nameField, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(statusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(logButton, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(removeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                         )
         );
         layout.setVerticalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
-//                                .addContainerGap(2, 2)
-                                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                                                .addComponent(removeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                                        .addComponent(ipLabel)
-                                                        .addComponent(ipField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                        .addComponent(portLabel)
-                                                        .addComponent(portSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                        .addComponent(nameLabel)
-                                                        .addComponent(nameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                                .addComponent(statusLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
-//                                .addContainerGap(2, 2)
+                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                                        .addComponent(logButton, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(removeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(ipLabel)
+                                                .addComponent(ipField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(portLabel)
+                                                .addComponent(portSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(nameLabel)
+                                                .addComponent(nameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(statusLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
                         )
         );
-    }
-
-    public TelnetReaderWorker getTelnetReaderWorker() {
-        return telnetReaderWorker;
     }
 
     public int getIndex() {
@@ -199,4 +197,7 @@ public class ConnectionPanel extends JPanel {
         return telnetReaderWorker.getLock();
     }
 
+    public void log(String text) {
+        logPanel.log(text);
+    }
 }

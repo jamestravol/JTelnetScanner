@@ -18,6 +18,7 @@ public class Images {
     private final ImageIcon hostDisConnected;
     private final ImageIcon hostIdle;
     private final ImageIcon deleted;
+    private final ImageIcon log;
     private final Image logo;
 
     public Images() {
@@ -29,6 +30,7 @@ public class Images {
         hostDisConnected = new ImageIcon(Main.class.getResource("/images/host_disconnected.png"));
         hostIdle = new ImageIcon(Main.class.getResource("/images/host_idle.png"));
         deleted = new ImageIcon(Main.class.getResource("/images/delete.png"));
+        log = new ImageIcon(Main.class.getResource("/images/log.png"));
         logo = Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/images/logo.jpg"));
     }
 
@@ -62,6 +64,10 @@ public class Images {
 
     public ImageIcon getDeleted() {
         return deleted;
+    }
+
+    public ImageIcon getLog() {
+        return log;
     }
 
     public Image getLogo() {

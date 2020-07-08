@@ -25,6 +25,7 @@ public class Main {
     public static volatile long fl = 0L;
     public static volatile boolean licensed = false;
     private static String message;
+    private static boolean forceExit = false;
 
     public static void main(String[] args) throws ClassNotFoundException, UnsupportedLookAndFeelException,
             InstantiationException, IllegalAccessException {
@@ -47,10 +48,8 @@ public class Main {
             checkAppState();
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(splash,
-                    "TelnetLogger unable to start",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            System.exit(11);
+            message = "TelnetLogger unable to start";
+            forceExit = true;
         }
 
         final Application application = Application.INSTANCE;
@@ -68,7 +67,10 @@ public class Main {
         application.getFrame().toFront();
         application.getFrame().requestFocus();
         application.getFrame().setAlwaysOnTop(false);
-        JOptionPane.showMessageDialog(application.getFrame(), message, "Info", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(application.getFrame(), message, "Info", forceExit ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
+        if (forceExit) {
+            SwingUtilities.invokeLater(() -> System.exit(1));
+        }
 
     }
 
@@ -98,7 +100,7 @@ public class Main {
             }
 
             message = "TelnetLogger has expired!";
-            System.exit(10);
+            forceExit = true;
 
         } else {
             Advapi32Util.registryCreateKey(WinReg.HKEY_CURRENT_USER, ROOT);

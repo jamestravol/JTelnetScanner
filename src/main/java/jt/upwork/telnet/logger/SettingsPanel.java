@@ -13,6 +13,8 @@ public class SettingsPanel extends JPanel {
     private javax.swing.JTextField separatorField;
     private javax.swing.JLabel separatorLabel;
     private javax.swing.JCheckBox singleSheetCheckbox;
+    private javax.swing.JLabel shiftLabel;
+    private javax.swing.JSpinner shiftSpinner;
 
     /**
      * Creates new form TabsPanel
@@ -48,25 +50,39 @@ public class SettingsPanel extends JPanel {
 
         limisLabel.setText("Fields limit:");
 
+        shiftLabel = new javax.swing.JLabel();
+        shiftSpinner = new javax.swing.JSpinner();
+        shiftSpinner.setValue(Integer.parseInt(Config.INSTANCE.getProperty("app.shift.count", "1")));
+        shiftSpinner.addChangeListener(e -> Config.INSTANCE.setProperty("app.shift.count",
+                shiftSpinner.getValue() != null ? "" + shiftSpinner.getValue() : "1"));
+
+        shiftLabel.setText("Shift (times a 24 hours):");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
                                 .addContainerGap()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(appendDateCheckbox)
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addComponent(limisLabel)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(limitSpinner)))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                         .addGroup(layout.createSequentialGroup()
-                                                .addComponent(separatorLabel)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                                        .addComponent(appendDateCheckbox)
+                                                        .addGroup(layout.createSequentialGroup()
+                                                                .addComponent(limisLabel)
+                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(limitSpinner)))
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                        .addGroup(layout.createSequentialGroup()
+                                                                .addComponent(separatorLabel)
+                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(separatorField, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                                        .addComponent(singleSheetCheckbox)))
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(shiftLabel)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(separatorField, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addComponent(singleSheetCheckbox))
+                                                .addComponent(shiftSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)))
                                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -82,6 +98,10 @@ public class SettingsPanel extends JPanel {
                                         .addComponent(separatorField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addComponent(limisLabel)
                                         .addComponent(limitSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                        .addComponent(shiftLabel)
+                                        .addComponent(shiftSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }
