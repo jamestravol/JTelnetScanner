@@ -34,6 +34,7 @@ public class LogPanel extends javax.swing.JPanel {
         textArea = new javax.swing.JTextArea();
         closeButton = new javax.swing.JButton();
 
+        textArea.setEditable(false);
         scrollPane.setViewportView(textArea);
 
         closeButton.setText("Close");
