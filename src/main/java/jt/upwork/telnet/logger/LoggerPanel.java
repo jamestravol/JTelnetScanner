@@ -1,11 +1,15 @@
 package jt.upwork.telnet.logger;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
@@ -17,6 +21,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class LoggerPanel extends JPanel {
 
+    private final DateTimeFormatter dateFormatter;
+
     private javax.swing.JButton connectButton;
     private javax.swing.JButton disconnectButton;
     private javax.swing.JButton fileButton;
@@ -24,6 +30,9 @@ public class LoggerPanel extends JPanel {
     private javax.swing.JButton addHostButton;
     private javax.swing.JPanel connectionPanels;
     private javax.swing.JButton openButton;
+    private javax.swing.JButton logButton;
+    private javax.swing.JScrollPane logScrollPane;
+    private javax.swing.JTextArea logTextArea;
 
     private final AtomicInteger running = new AtomicInteger();
 
@@ -102,6 +111,7 @@ public class LoggerPanel extends JPanel {
     }
 
     public LoggerPanel() {
+        dateFormatter = DateTimeFormatter.ofPattern(Config.INSTANCE.getProperty("app.log.datetime.format", "dd/MM/yyyy-HH:mm:ss"));
         initComponents();
         afterInit();
         initListeners();
@@ -203,6 +213,21 @@ public class LoggerPanel extends JPanel {
                 ex.printStackTrace();
             }
         });
+
+        DefaultCaret caret = (DefaultCaret) logTextArea.getCaret();
+        caret.setUpdatePolicy(DefaultCaret.OUT_BOTTOM);
+
+        logButton.addActionListener((event) -> {
+            if (logScrollPane.isVisible()) {
+                logScrollPane.setVisible(false);
+                logButton.setText(">");
+                Application.INSTANCE.getFrame().pack();
+            } else {
+                logScrollPane.setVisible(true);
+                logButton.setText("<");
+                Application.INSTANCE.getFrame().pack();
+            }
+        });
     }
 
     private void cleanUpFile(File selectedFile) {
@@ -253,6 +278,19 @@ public class LoggerPanel extends JPanel {
         }
     }
 
+    public void log(String source, String text) {
+
+        if (logTextArea.getLineCount() >= 1000) {
+            try {
+                logTextArea.replaceRange("", 0, logTextArea.getLineEndOffset(0));
+            } catch (BadLocationException e) {
+                e.printStackTrace();
+            }
+        }
+
+        logTextArea.append(dateFormatter.format(LocalDateTime.now()) + " " + source + ": " + text + "\n");
+    }
+
     private void initComponents() {
 
         connectionPanels = new javax.swing.JPanel();
@@ -262,6 +300,9 @@ public class LoggerPanel extends JPanel {
         fileLabel = new javax.swing.JLabel();
         addHostButton = new javax.swing.JButton();
         openButton = new javax.swing.JButton();
+        logScrollPane = new javax.swing.JScrollPane();
+        logTextArea = new javax.swing.JTextArea();
+        logButton = new javax.swing.JButton();
 
         connectionPanels.setLayout(new BoxLayout(connectionPanels, BoxLayout.Y_AXIS));
 
@@ -279,6 +320,13 @@ public class LoggerPanel extends JPanel {
 
         openButton.setEnabled(false);
         openButton.setText("Open");
+
+        logTextArea.setEditable(false);
+        logTextArea.setRows(3);
+        logScrollPane.setViewportView(logTextArea);
+        logScrollPane.setVisible(false);
+
+        logButton.setText(">");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -300,27 +348,36 @@ public class LoggerPanel extends JPanel {
                                                         .addGroup(layout.createSequentialGroup()
                                                                 .addComponent(connectButton)
                                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addComponent(disconnectButton)))))
+                                                                .addComponent(disconnectButton)
+                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                                .addComponent(logButton)))))
+                                .addGap(10, 10, 10)
+                                .addComponent(logScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
                                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
-                                .addComponent(connectionPanels, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(addHostButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(fileButton)
-                                        .addComponent(fileLabel))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(openButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(connectButton)
-                                        .addComponent(disconnectButton))
-                                .addContainerGap())
-        );
+                                .addGap(10, 10, 10)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                        .addComponent(logScrollPane)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(connectionPanels, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(addHostButton)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                        .addComponent(fileButton)
+                                                        .addComponent(fileLabel))
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(openButton)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                        .addComponent(connectButton)
+                                                        .addComponent(disconnectButton)
+                                                        .addComponent(logButton))))
+                                                .addContainerGap())
+                                );
     }
 
 

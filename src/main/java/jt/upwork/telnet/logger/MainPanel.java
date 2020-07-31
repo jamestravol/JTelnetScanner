@@ -7,8 +7,12 @@ import javax.swing.*;
  */
 public class MainPanel extends JTabbedPane {
 
-    public MainPanel() {
-        add("Logger", new LoggerPanel());
+    public static final MainPanel INSTANCE = new MainPanel();
+    private final LoggerPanel loggerPanel;
+
+    private MainPanel() {
+        loggerPanel = new LoggerPanel();
+        add("Logger", loggerPanel);
         add("Settings", new SettingsPanel());
         add("Help", new HelpPanel());
         if (!Main.licensed) {
@@ -21,5 +25,9 @@ public class MainPanel extends JTabbedPane {
             this.setSelectedIndex(2);
         }
 
+    }
+
+    public LoggerPanel getLoggerPanel() {
+        return loggerPanel;
     }
 }

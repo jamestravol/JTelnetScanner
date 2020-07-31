@@ -105,6 +105,9 @@ public class ConnectionPanel extends JPanel {
         logButton.setIcon(Images.INSTANCE.getLog());
         logButton.setBorder(new EmptyBorder(0, 0, 0, 0));
 
+        //todo removed functionality
+        logButton.setVisible(false);
+
         this.setBorder(new EmptyBorder(3, 3, 3, 3));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -199,5 +202,6 @@ public class ConnectionPanel extends JPanel {
 
     public void log(String text) {
         logPanel.log(text);
+        MainPanel.INSTANCE.getLoggerPanel().log(getNameOrIp(), text);
     }
 }
