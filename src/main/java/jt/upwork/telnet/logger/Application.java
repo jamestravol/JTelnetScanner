@@ -22,6 +22,8 @@ public final class Application {
 
     private volatile File selectedFile;
 
+    private volatile long startMills;
+
     public Application() {
 
         System.out.println(Config.INSTANCE);
@@ -31,7 +33,7 @@ public final class Application {
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.setSize(600, 800);
         frame.setLocationRelativeTo(null);
-        frame.getContentPane().add(new MainPanel());
+        frame.getContentPane().add(MainPanel.INSTANCE);
         frame.pack();
         frame.setResizable(false);
 
@@ -84,7 +86,7 @@ public final class Application {
         }
     }
 
-    public File getSelectedFile() {
+    public File getSelectedDir() {
         return selectedFile;
     }
 
@@ -94,6 +96,14 @@ public final class Application {
 
     public JFrame getFrame() {
         return frame;
+    }
+
+    public long getStartMills() {
+        return startMills;
+    }
+
+    public void setStartMills(long startMills) {
+        this.startMills = startMills;
     }
 
     public void show() {

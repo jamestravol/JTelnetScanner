@@ -20,9 +20,6 @@ import java.util.Map;
 public class ExcelProcessor {
 
     public synchronized static void update(File file, HashMap<String, List<String[]>> data) {
-
-
-
         try {
             updateInternal(file, data);
         } catch (Exception e) {

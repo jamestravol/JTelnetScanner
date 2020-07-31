@@ -1,12 +1,15 @@
 package jt.upwork.telnet.logger;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
@@ -18,9 +21,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class LoggerPanel extends JPanel {
 
-    private javax.swing.ButtonGroup fileModeRadioGroup;
-    private javax.swing.JRadioButton appendRadio;
-    private javax.swing.JRadioButton overwriteRadio;
+    private final DateTimeFormatter dateFormatter;
+
     private javax.swing.JButton connectButton;
     private javax.swing.JButton disconnectButton;
     private javax.swing.JButton fileButton;
@@ -28,6 +30,9 @@ public class LoggerPanel extends JPanel {
     private javax.swing.JButton addHostButton;
     private javax.swing.JPanel connectionPanels;
     private javax.swing.JButton openButton;
+    private javax.swing.JButton logButton;
+    private javax.swing.JScrollPane logScrollPane;
+    private javax.swing.JTextArea logTextArea;
 
     private final AtomicInteger running = new AtomicInteger();
 
@@ -79,7 +84,15 @@ public class LoggerPanel extends JPanel {
                 }
             }
 
-            ExcelProcessor.update(Application.INSTANCE.getSelectedFile(), result);
+            File file = new File(Application.INSTANCE.getSelectedDir(), Utils.getFilename(
+                    Application.INSTANCE.getStartMills(),
+                    Integer.parseInt(Config.INSTANCE.getProperty("app.shift.count", "1"))));
+
+            if (!file.exists()) {
+                ExcelProcessor.createEmpty(file);
+            }
+
+            ExcelProcessor.update(file, result);
 
             for (int i = 0; i < connectionPanels.getComponentCount(); i++) {
                 ConnectionPanel component = (ConnectionPanel) connectionPanels.getComponent(i);
@@ -98,6 +111,7 @@ public class LoggerPanel extends JPanel {
     }
 
     public LoggerPanel() {
+        dateFormatter = DateTimeFormatter.ofPattern(Config.INSTANCE.getProperty("app.log.datetime.format", "dd/MM/yyyy-HH:mm:ss"));
         initComponents();
         afterInit();
         initListeners();
@@ -142,18 +156,14 @@ public class LoggerPanel extends JPanel {
         fileButton.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
 
-            chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             chooser.setMultiSelectionEnabled(false);
-            chooser.setAcceptAllFileFilterUsed(false);
-
-            FileNameExtensionFilter filter = new FileNameExtensionFilter("Excel files", "xls", "xlsx");
-            chooser.addChoosableFileFilter(filter);
 
             final int returnValue = chooser.showDialog(Application.INSTANCE.getFrame(), "Choose");
 
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 Application.INSTANCE.setSelectedFile(chooser.getSelectedFile());
-                fileLabel.setText(chooser.getSelectedFile().getName());
+                fileLabel.setText(chooser.getSelectedFile().getAbsolutePath());
                 connectButton.setEnabled(true);
                 openButton.setEnabled(true);
             }
@@ -163,37 +173,26 @@ public class LoggerPanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                if (Application.INSTANCE.getSelectedFile().exists()) {
+                Application.INSTANCE.getSelectedDir().mkdirs();
 
-                    if (overwriteRadio.isSelected()) {
-                        final int result = JOptionPane.showConfirmDialog(Application.INSTANCE.getFrame(),
-                                String.format("Do you really want to overwrite the file %s?",
-                                        Application.INSTANCE.getSelectedFile().getName()),
-                                "Overwrite?",
-                                JOptionPane.OK_CANCEL_OPTION,
-                                JOptionPane.QUESTION_MESSAGE);
+                final String filename = Utils.getFilename(0);
 
-                        if (result == JOptionPane.OK_OPTION) {
-                            cleanUpFile(Application.INSTANCE.getSelectedFile());
-                            execute();
-                        }
+                File file = new File(Application.INSTANCE.getSelectedDir(), filename);
 
-                    } else {
-                        execute();
-                    }
-
-                } else {
+                if (file.exists()) {
                     final int result = JOptionPane.showConfirmDialog(Application.INSTANCE.getFrame(),
-                            String.format("Create a new file %s?",
-                                    Application.INSTANCE.getSelectedFile().getName()),
-                            "Create new?",
+                            String.format("Do you really want to overwrite the file %s?",
+                                    file.getName()),
+                            "Overwrite?",
                             JOptionPane.OK_CANCEL_OPTION,
                             JOptionPane.QUESTION_MESSAGE);
 
                     if (result == JOptionPane.OK_OPTION) {
-                        createEmpty(Application.INSTANCE.getSelectedFile());
+                        cleanUpFile(file);
                         execute();
                     }
+                } else {
+                    execute();
                 }
             }
         });
@@ -209,15 +208,26 @@ public class LoggerPanel extends JPanel {
 
         openButton.addActionListener(e -> {
             try {
-                Desktop.getDesktop().open(Application.INSTANCE.getSelectedFile());
+                Desktop.getDesktop().open(Application.INSTANCE.getSelectedDir());
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
         });
-    }
 
-    private void createEmpty(File selectedFile) {
-        ExcelProcessor.createEmpty(selectedFile);
+        DefaultCaret caret = (DefaultCaret) logTextArea.getCaret();
+        caret.setUpdatePolicy(DefaultCaret.OUT_BOTTOM);
+
+        logButton.addActionListener((event) -> {
+            if (logScrollPane.isVisible()) {
+                logScrollPane.setVisible(false);
+                logButton.setText(">");
+                Application.INSTANCE.getFrame().pack();
+            } else {
+                logScrollPane.setVisible(true);
+                logButton.setText("<");
+                Application.INSTANCE.getFrame().pack();
+            }
+        });
     }
 
     private void cleanUpFile(File selectedFile) {
@@ -244,6 +254,7 @@ public class LoggerPanel extends JPanel {
             }
         }, flushIntervalMills, flushIntervalMills);
         Application.INSTANCE.showActiveStatus();
+        Application.INSTANCE.setStartMills(System.currentTimeMillis());
     }
 
     private void onStopped(ConnectionPanel connectionPanel) {
@@ -267,18 +278,31 @@ public class LoggerPanel extends JPanel {
         }
     }
 
+    public void log(String source, String text) {
+
+        if (logTextArea.getLineCount() >= 1000) {
+            try {
+                logTextArea.replaceRange("", 0, logTextArea.getLineEndOffset(0));
+            } catch (BadLocationException e) {
+                e.printStackTrace();
+            }
+        }
+
+        logTextArea.append(dateFormatter.format(LocalDateTime.now()) + " " + source + ": " + text + "\n");
+    }
+
     private void initComponents() {
 
-        fileModeRadioGroup = new javax.swing.ButtonGroup();
         connectionPanels = new javax.swing.JPanel();
         connectButton = new javax.swing.JButton();
         disconnectButton = new javax.swing.JButton();
         fileButton = new javax.swing.JButton();
         fileLabel = new javax.swing.JLabel();
-        overwriteRadio = new javax.swing.JRadioButton();
-        appendRadio = new javax.swing.JRadioButton();
         addHostButton = new javax.swing.JButton();
         openButton = new javax.swing.JButton();
+        logScrollPane = new javax.swing.JScrollPane();
+        logTextArea = new javax.swing.JTextArea();
+        logButton = new javax.swing.JButton();
 
         connectionPanels.setLayout(new BoxLayout(connectionPanels, BoxLayout.Y_AXIS));
 
@@ -290,19 +314,19 @@ public class LoggerPanel extends JPanel {
 
         fileButton.setText("Browse");
 
-        fileLabel.setText("Select an excel file");
-
-        fileModeRadioGroup.add(overwriteRadio);
-        overwriteRadio.setSelected(true);
-        overwriteRadio.setText("Override");
-
-        fileModeRadioGroup.add(appendRadio);
-        appendRadio.setText("Append");
+        fileLabel.setText("Select directory");
 
         addHostButton.setText("Add host");
 
         openButton.setEnabled(false);
         openButton.setText("Open");
+
+        logTextArea.setEditable(false);
+        logTextArea.setRows(3);
+        logScrollPane.setViewportView(logTextArea);
+        logScrollPane.setVisible(false);
+
+        logButton.setText(">");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -322,37 +346,38 @@ public class LoggerPanel extends JPanel {
                                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                                                 .addComponent(fileLabel))
                                                         .addGroup(layout.createSequentialGroup()
-                                                                .addComponent(overwriteRadio)
-                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addComponent(appendRadio))
-                                                        .addGroup(layout.createSequentialGroup()
                                                                 .addComponent(connectButton)
                                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addComponent(disconnectButton)))))
+                                                                .addComponent(disconnectButton)
+                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                                .addComponent(logButton)))))
+                                .addGap(10, 10, 10)
+                                .addComponent(logScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
                                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
-                                .addComponent(connectionPanels, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(addHostButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(fileButton)
-                                        .addComponent(fileLabel))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(openButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(overwriteRadio)
-                                        .addComponent(appendRadio))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(connectButton)
-                                        .addComponent(disconnectButton))
-                                .addContainerGap())
-        );
+                                .addGap(10, 10, 10)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                        .addComponent(logScrollPane)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(connectionPanels, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(addHostButton)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                        .addComponent(fileButton)
+                                                        .addComponent(fileLabel))
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(openButton)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                        .addComponent(connectButton)
+                                                        .addComponent(disconnectButton)
+                                                        .addComponent(logButton))))
+                                                .addContainerGap())
+                                );
     }
 
 
