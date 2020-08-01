@@ -199,4 +199,7 @@ public class ConnectionPanel extends JPanel {
         return telnetReaderWorker.getLock();
     }
 
+    public void log(String text) {
+        MainPanel.INSTANCE.getLoggerPanel().log(getNameOrIp(), text);
+    }
 }
